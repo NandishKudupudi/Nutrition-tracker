@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NutriTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b10;--bg2:#0e1218;--bg3:#141922;--bg4:#1c2230;--bg5:#222b3a;
+  --border:#1e2840;--border2:#2a3850;--border3:#354870;
+  --text:#dce8f8;--text2:#8a9bbf;--text3:#4a5878;--text4:#2a3450;
+  --kcal:#ff6b35;--protein:#4d9fff;--carbs:#2dd898;--fat:#ffc53d;
+  --green:#2dd898;--red:#ff4d6d;--amber:#ffc53d;--blue:#4d9fff;--purple:#b06dff;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.2;pointer-events:none;z-index:0}
+.app{max-width:680px;margin:0 auto;padding:20px 14px 60px;position:relative;z-index:1}
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.header-left h1{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--text)}
+.header-left h1 span{color:var(--green)}
+.header-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'Space Mono',monospace;letter-spacing:1px;text-transform:uppercase}
+.db-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--green);background:rgba(45,216,152,.1);border:1px solid rgba(45,216,152,.2);border-radius:20px;padding:2px 8px;font-family:'Space Mono',monospace}
+.date-row{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.date-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.date-btn:hover{background:var(--bg4);border-color:var(--border3);color:var(--text)}
+.date-display{font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border);padding:8px 14px;border-radius:8px;flex:1;text-align:center;font-family:'Space Mono',monospace}
+.kcal-ring-wrap{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.ring-text-wrap{flex:1}
+.ring-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-family:'Space Mono',monospace}
+.ring-main{font-size:26px;font-weight:700;color:var(--kcal);font-family:'Space Mono',monospace;line-height:1}
+.ring-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.ring-remaining{font-size:12px;margin-top:6px}
+.ring-remaining span{font-family:'Space Mono',monospace;font-weight:700}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.macro-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 10px;position:relative;overflow:hidden}
+.macro-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+.kcal-c::before{background:var(--kcal)}.prot-c::before{background:var(--protein)}.carbs-c::before{background:var(--carbs)}.fat-c::before{background:var(--fat)}
+.macro-card .label{font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;font-family:'Space Mono',monospace}
+.macro-card .val{font-size:18px;font-weight:700;margin-bottom:1px;font-family:'Space Mono',monospace}
+.macro-card .goal{font-size:10px;color:var(--text3)}
+.macro-card .bar-bg{height:3px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden}
+.macro-card .bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.kcal-c .val{color:var(--kcal)}.prot-c .val{color:var(--protein)}.carbs-c .val{color:var(--carbs)}.fat-c .val{color:var(--fat)}
+.search-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.search-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-family:'Space Mono',monospace;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.autocomplete{position:relative}
+.search-row{display:flex;gap:8px}
+.search-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s;width:100%}
+.search-input:focus{border-color:var(--blue)}
+.search-input::placeholder{color:var(--text4)}
+.search-hint{font-size:11px;color:var(--text3);margin-top:6px}
+.results-area{margin-top:10px}
+.ac-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;z-index:100;max-height:280px;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.ac-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:var(--bg4)}
+.ac-name{font-size:13px;font-weight:500;color:var(--text)}
+.ac-meta{font-size:11px;color:var(--text3);margin-top:2px;font-family:'Space Mono',monospace}
+.ac-kcal{font-size:12px;font-weight:700;color:var(--kcal);font-family:'Space Mono',monospace;white-space:nowrap}
+.food-result{background:var(--bg3);border:1px solid var(--green);border-radius:10px;overflow:hidden}
+.fr-top{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 13px}
+.fr-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.fr-per{font-size:11px;color:var(--text3);margin-bottom:5px}
+.fr-macros{display:flex;gap:6px;flex-wrap:wrap}
+.fr-m{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;font-family:'Space Mono',monospace}
+.fr-m.p{background:rgba(77,159,255,.12);color:var(--protein)}
+.fr-m.c{background:rgba(45,216,152,.12);color:var(--carbs)}
+.fr-m.f{background:rgba(255,197,61,.12);color:var(--fat)}
+.fr-m.fb{background:rgba(138,155,191,.1);color:var(--text2)}
+.fr-kcal-big{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--kcal);text-align:right}
+.fr-kcal-label{font-size:10px;color:var(--text3);text-align:right}
+.qty-row{display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg4);border-top:1px solid var(--border)}
+.qty-label{font-size:12px;color:var(--text2)}
+.qty-input{width:80px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none;font-family:'Space Mono',monospace}
+.qty-input:focus{border-color:var(--blue)}
+.qty-calc{font-size:12px;color:var(--text3);flex:1;font-family:'Space Mono',monospace}
+.add-btn{background:var(--green);color:#000;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;transition:opacity .2s}
+.add-btn:hover{opacity:.85}
+.log-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:'Space Mono',monospace}
+.log-count{font-size:10px;color:var(--text3);background:var(--bg4);padding:2px 8px;border-radius:20px;font-family:'Space Mono',monospace}
+.log-empty{color:var(--text3);font-size:13px;text-align:center;padding:22px 0;border:1px dashed var(--border);border-radius:8px}
+.log-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.li-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.li-meta{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace}
+.li-macros{display:flex;gap:8px;margin-top:4px}
+.li-m{font-size:10px;font-family:'Space Mono',monospace}
+.li-m.p{color:var(--protein)}.li-m.c{color:var(--carbs)}.li-m.f{color:var(--fat)}
+.li-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.li-kcal{font-size:14px;font-weight:700;color:var(--kcal);font-family:'Space Mono',monospace}
+.del-btn{background:none;border:1px solid transparent;color:var(--text3);cursor:pointer;font-size:14px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s}
+.del-btn:hover{color:var(--red);background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.2)}
+.micro-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px}
+.micro-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.micro-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.mi-label{font-size:11px;color:var(--text2)}
+.mi-val{font-size:12px;font-weight:700;color:var(--text);font-family:'Space Mono',monospace}
+.status-pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;font-family:'Space Mono',monospace}
+.pill-good{background:rgba(45,216,152,.15);color:var(--green)}
+.pill-low{background:rgba(255,77,109,.15);color:var(--red)}
+.pill-high{background:rgba(255,197,61,.15);color:var(--amber)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>Nutri<span>Track</span></h1>
+      <div class="header-sub">Daily Macro Monitor</div>
+    </div>
+    <div style="text-align:right">
+      <div class="db-badge">✦ 200+ Foods</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">Goal: 2200 kcal · Offline</div>
+    </div>
+  </div>
+
+  <div class="date-row">
+    <button class="date-btn" onclick="changeDay(-1)">&#8592;</button>
+    <div class="date-display" id="date-display"></div>
+    <button class="date-btn" onclick="changeDay(1)">&#8594;</button>
+  </div>
+
+  <div class="kcal-ring-wrap">
+    <svg width="80" height="80" viewBox="0 0 80 80" style="flex-shrink:0">
+      <circle cx="40" cy="40" r="34" fill="none" stroke="var(--bg4)" stroke-width="7"/>
+      <circle id="ring-circle" cx="40" cy="40" r="34" fill="none" stroke="var(--kcal)" stroke-width="7"
+        stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
+        transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1)"/>
+    </svg>
+    <div class="ring-text-wrap">
+      <div class="ring-label">Calories Today</div>
+      <div class="ring-main" id="kcal-main">0</div>
+      <div class="ring-sub">/ 2200 kcal goal</div>
+      <div class="ring-remaining" id="kcal-remaining"><span style="color:var(--green)">+2200</span> remaining</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;text-align:right">
+      <div style="font-size:11px;color:var(--protein);font-family:'Space Mono',monospace" id="r-prot">P: 0g</div>
+      <div style="font-size:11px;color:var(--carbs);font-family:'Space Mono',monospace" id="r-carbs">C: 0g</div>
+      <div style="font-size:11px;color:var(--fat);font-family:'Space Mono',monospace" id="r-fat">F: 0g</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="macro-card kcal-c"><div class="label">Calories</div><div class="val" id="s-kcal">0</div><div class="goal">/ 2200</div><div class="bar-bg"><div class="bar-fill" id="b-kcal" style="background:var(--kcal);width:0%"></div></div></div>
+    <div class="macro-card prot-c"><div class="label">Protein</div><div class="val" id="s-prot">0g</div><div class="goal">100–120g</div><div class="bar-bg"><div class="bar-fill" id="b-prot" style="background:var(--protein);width:0%"></div></div></div>
+    <div class="macro-card carbs-c"><div class="label">Carbs</div><div class="val" id="s-carbs">0g</div><div class="goal">280–320g</div><div class="bar-bg"><div class="bar-fill" id="b-carbs" style="background:var(--carbs);width:0%"></div></div></div>
+    <div class="macro-card fat-c"><div class="label">Fat</div><div class="val" id="s-fat">0g</div><div class="goal">60–70g</div><div class="bar-bg"><div class="bar-fill" id="b-fat" style="background:var(--fat);width:0%"></div></div></div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-label">Add Food <span class="db-badge" style="vertical-align:middle">Indian &amp; Common Foods</span></div>
+    <div class="autocomplete">
+      <div class="search-row">
+        <input class="search-input" id="food-search" placeholder="Type food... idli, chicken, oats, biryani..." autocomplete="off"
+          oninput="onSearchInput()" onkeydown="onSearchKey(event)"/>
+      </div>
+      <div class="ac-dropdown" id="ac-dropdown" style="display:none"></div>
+    </div>
+    <div class="search-hint">💡 Type 2+ letters → instant suggestions from 200+ foods</div>
+    <div class="results-area" id="results-area"></div>
+  </div>
+
+  <div class="log-section">
+    <div class="section-header">
+      <div class="section-title">Today's Log</div>
+      <div class="log-count" id="log-count">0 items</div>
+    </div>
+    <div id="log-list"><div class="log-empty">No food logged yet.<br>Search and add above ↑</div></div>
+  </div>
+
+  <div class="micro-section">
+    <div class="section-header"><div class="section-title">Micronutrients &amp; Details</div></div>
+    <div class="micro-grid" id="micro-grid"></div>
+  </div>
+</div>
+
+<script>
+// All values per 100g
+const DB=[
+  // RICE & GRAINS
+  {n:"Cooked White Rice",kcal:130,p:2.7,c:28,fat:0.3,fiber:0.4,sugar:0,sodium:1,chol:0,satfat:0.1,vitC:0,calcium:10,iron:0.2,tags:"rice chawal white plain boiled"},
+  {n:"Cooked Brown Rice",kcal:112,p:2.6,c:23,fat:0.9,fiber:1.8,sugar:0,sodium:5,chol:0,satfat:0.2,vitC:0,calcium:10,iron:0.4,tags:"rice brown whole grain"},
+  {n:"Basmati Rice (cooked)",kcal:121,p:2.5,c:25,fat:0.4,fiber:0.4,sugar:0,sodium:1,chol:0,satfat:0.1,vitC:0,calcium:10,iron:0.2,tags:"rice basmati biryani pulao"},
+  {n:"Oats (cooked)",kcal:71,p:2.5,c:12,fat:1.4,fiber:1.7,sugar:0.3,sodium:49,chol:0,satfat:0.2,vitC:0,calcium:14,iron:0.6,tags:"oats oatmeal porridge breakfast"},
+  {n:"Oats (dry/raw)",kcal:389,p:16.9,c:66,fat:6.9,fiber:10.6,sugar:1,sodium:2,chol:0,satfat:1.2,vitC:0,calcium:54,iron:4.7,tags:"oats raw dry rolled"},
+  {n:"Oats with Milk (cooked)",kcal:85,p:4,c:13,fat:2.7,fiber:1.5,sugar:4,sodium:47,chol:7,satfat:1.2,vitC:0,calcium:70,iron:0.6,tags:"oats milk cooked breakfast porridge"},
+  {n:"Poha (cooked)",kcal:110,p:2.5,c:23,fat:1.5,fiber:0.9,sugar:0,sodium:160,chol:0,satfat:0.3,vitC:2,calcium:14,iron:1.8,tags:"poha flattened rice breakfast"},
+  {n:"Upma",kcal:115,p:3,c:20,fat:3,fiber:1.5,sugar:0,sodium:200,chol:0,satfat:0.5,vitC:2,calcium:12,iron:0.8,tags:"upma semolina rava breakfast"},
+  {n:"Semolina / Rava (dry)",kcal:360,p:12,c:72,fat:1,fiber:3.9,sugar:0.5,sodium:1,chol:0,satfat:0.1,vitC:0,calcium:17,iron:4.4,tags:"rava suji semolina"},
+  {n:"Quinoa (cooked)",kcal:120,p:4.4,c:21,fat:1.9,fiber:2.8,sugar:0.9,sodium:7,chol:0,satfat:0.2,vitC:0,calcium:17,iron:1.5,tags:"quinoa protein superfood"},
+  // BREADS & ROTIS
+  {n:"Whole Wheat Roti",kcal:240,p:8.7,c:45,fat:3,fiber:6.2,sugar:0,sodium:300,chol:0,satfat:0.5,vitC:0,calcium:32,iron:2.2,tags:"roti chapati wheat phulka bread"},
+  {n:"Maida Roti / Naan",kcal:260,p:7,c:50,fat:3.5,fiber:1.5,sugar:1,sodium:400,chol:5,satfat:1,vitC:0,calcium:20,iron:1.5,tags:"naan maida bread white roti"},
+  {n:"Paratha (plain)",kcal:260,p:6,c:36,fat:10,fiber:3,sugar:0,sodium:350,chol:10,satfat:3,vitC:0,calcium:25,iron:1.8,tags:"paratha parantha bread breakfast"},
+  {n:"Aloo Paratha",kcal:240,p:5,c:33,fat:9,fiber:2.5,sugar:0.5,sodium:380,chol:10,satfat:2.5,vitC:8,calcium:30,iron:1.5,tags:"paratha aloo potato stuffed"},
+  {n:"White Bread (slice)",kcal:265,p:9,c:49,fat:3.2,fiber:2.3,sugar:5,sodium:490,chol:0,satfat:0.6,vitC:0,calcium:100,iron:3.6,tags:"bread white slice sandwich"},
+  {n:"Brown Bread (slice)",kcal:247,p:10,c:44,fat:3.5,fiber:5.9,sugar:3,sodium:445,chol:0,satfat:0.7,vitC:0,calcium:107,iron:2.5,tags:"bread brown whole wheat slice"},
+  // SOUTH INDIAN
+  {n:"Idli (plain)",kcal:58,p:2,c:12,fat:0.1,fiber:0.5,sugar:0,sodium:200,chol:0,satfat:0,vitC:0,calcium:10,iron:0.5,tags:"idli south indian breakfast steam"},
+  {n:"Dosa (plain)",kcal:133,p:3.5,c:24,fat:2.7,fiber:0.5,sugar:0,sodium:200,chol:0,satfat:0.5,vitC:0,calcium:15,iron:1,tags:"dosa south indian crepe breakfast"},
+  {n:"Masala Dosa",kcal:150,p:3.5,c:25,fat:4,fiber:1.2,sugar:0.5,sodium:280,chol:5,satfat:1,vitC:6,calcium:20,iron:1,tags:"dosa masala potato south indian"},
+  {n:"Sambar",kcal:45,p:2.5,c:6,fat:1.2,fiber:2,sugar:1.5,sodium:350,chol:0,satfat:0.2,vitC:10,calcium:30,iron:1.5,tags:"sambar soup dal south indian"},
+  {n:"Coconut Chutney",kcal:170,p:1.5,c:6,fat:15,fiber:3,sugar:2,sodium:200,chol:0,satfat:13,vitC:2,calcium:15,iron:0.8,tags:"chutney coconut south indian"},
+  {n:"Rasam",kcal:25,p:1,c:4,fat:0.5,fiber:0.5,sugar:1,sodium:400,chol:0,satfat:0.1,vitC:5,calcium:20,iron:0.8,tags:"rasam soup south indian tamarind"},
+  {n:"Uttapam",kcal:108,p:3,c:19,fat:2.5,fiber:1,sugar:0.5,sodium:220,chol:0,satfat:0.4,vitC:3,calcium:20,iron:0.8,tags:"uttapam south indian breakfast"},
+  {n:"Pongal",kcal:140,p:3.5,c:22,fat:4,fiber:1.2,sugar:0,sodium:250,chol:5,satfat:1.5,vitC:0,calcium:15,iron:0.5,tags:"pongal south indian rice dal"},
+  {n:"Vada (medu)",kcal:322,p:8,c:31,fat:18,fiber:2.5,sugar:0,sodium:380,chol:0,satfat:3,vitC:0,calcium:40,iron:2,tags:"vada medu urad south indian"},
+  // LENTILS & LEGUMES
+  {n:"Dal (toor/arhar, cooked)",kcal:116,p:9,c:20,fat:0.4,fiber:7.9,sugar:1.8,sodium:5,chol:0,satfat:0.1,vitC:1,calcium:30,iron:1.9,tags:"dal toor arhar lentil"},
+  {n:"Moong Dal (cooked)",kcal:94,p:7,c:15,fat:0.4,fiber:0.8,sugar:1.4,sodium:3,chol:0,satfat:0.1,vitC:1,calcium:27,iron:1.4,tags:"moong dal mung lentil green"},
+  {n:"Chana Dal (cooked)",kcal:164,p:8.9,c:27,fat:2.6,fiber:7.6,sugar:4.8,sodium:24,chol:0,satfat:0.3,vitC:1,calcium:49,iron:2.9,tags:"chana dal chickpea split"},
+  {n:"Masoor Dal (cooked)",kcal:116,p:9,c:20,fat:0.4,fiber:7.9,sugar:1.8,sodium:5,chol:0,satfat:0.1,vitC:1.5,calcium:19,iron:3.3,tags:"masoor dal red lentil"},
+  {n:"Rajma (cooked)",kcal:127,p:8.7,c:22,fat:0.5,fiber:6.4,sugar:0.3,sodium:2,chol:0,satfat:0.1,vitC:2,calcium:28,iron:2.9,tags:"rajma kidney beans"},
+  {n:"Chole / Chana (cooked)",kcal:164,p:8.9,c:27,fat:2.6,fiber:7.6,sugar:4.8,sodium:24,chol:0,satfat:0.3,vitC:1.3,calcium:49,iron:2.9,tags:"chole chana chickpea"},
+  {n:"Soya Chunks (cooked)",kcal:140,p:22,c:10,fat:1,fiber:4,sugar:0,sodium:10,chol:0,satfat:0.1,vitC:0,calcium:20,iron:3,tags:"soya soy chunks meal nuggets protein"},
+  {n:"Tofu (firm)",kcal:76,p:8,c:1.9,fat:4.2,fiber:0.3,sugar:0.7,sodium:7,chol:0,satfat:0.5,vitC:0.1,calcium:350,iron:1.6,tags:"tofu soy protein vegan"},
+  // POULTRY & EGGS
+  {n:"Chicken Breast (grilled)",kcal:165,p:31,c:0,fat:3.6,fiber:0,sugar:0,sodium:74,chol:85,satfat:1,vitC:0,calcium:15,iron:1,tags:"chicken breast grilled boneless protein"},
+  {n:"Chicken Thigh (grilled)",kcal:209,p:26,c:0,fat:10,fiber:0,sugar:0,sodium:88,chol:90,satfat:2.8,vitC:0,calcium:12,iron:1.2,tags:"chicken thigh grilled"},
+  {n:"Chicken Curry",kcal:170,p:18,c:5,fat:9,fiber:0.5,sugar:1,sodium:380,chol:70,satfat:2.5,vitC:3,calcium:20,iron:1.2,tags:"chicken curry masala gravy"},
+  {n:"Egg (whole boiled, per 100g)",kcal:155,p:13,c:1.1,fat:11,fiber:0,sugar:1.1,sodium:124,chol:373,satfat:3.3,vitC:0,calcium:50,iron:1.8,tags:"egg boiled whole"},
+  {n:"Egg White",kcal:52,p:11,c:0.7,fat:0.2,fiber:0,sugar:0.5,sodium:166,chol:0,satfat:0,vitC:0,calcium:6,iron:0.1,tags:"egg white protein"},
+  {n:"Egg Omelette",kcal:180,p:14,c:1,fat:13,fiber:0,sugar:0.5,sodium:350,chol:380,satfat:4,vitC:0,calcium:55,iron:1.9,tags:"egg omelette fried"},
+  {n:"Mutton (cooked)",kcal:218,p:25,c:0,fat:12,fiber:0,sugar:0,sodium:70,chol:97,satfat:5,vitC:0,calcium:17,iron:2.7,tags:"mutton lamb goat meat"},
+  {n:"Fish (rohu, cooked)",kcal:120,p:20,c:0,fat:4,fiber:0,sugar:0,sodium:65,chol:65,satfat:0.8,vitC:0,calcium:30,iron:1,tags:"fish rohu cooked"},
+  {n:"Tuna (canned in water)",kcal:116,p:25.5,c:0,fat:1,fiber:0,sugar:0,sodium:330,chol:47,satfat:0.3,vitC:0,calcium:11,iron:1.3,tags:"tuna fish canned protein"},
+  {n:"Prawn / Shrimp (cooked)",kcal:99,p:21,c:0.9,fat:1.1,fiber:0,sugar:0,sodium:111,chol:189,satfat:0.2,vitC:0,calcium:70,iron:0.3,tags:"prawn shrimp seafood"},
+  // DAIRY
+  {n:"Milk (full fat 3.5%)",kcal:61,p:3.2,c:4.8,fat:3.5,fiber:0,sugar:4.8,sodium:44,chol:14,satfat:2.2,vitC:0,calcium:113,iron:0,tags:"milk full fat dairy"},
+  {n:"Milk (toned 1.5%)",kcal:45,p:3.2,c:4.8,fat:1.5,fiber:0,sugar:4.8,sodium:44,chol:5,satfat:0.9,vitC:0,calcium:120,iron:0,tags:"milk toned low fat dairy"},
+  {n:"Milk (skimmed)",kcal:34,p:3.4,c:4.9,fat:0.1,fiber:0,sugar:4.9,sodium:44,chol:2,satfat:0.1,vitC:0,calcium:125,iron:0,tags:"milk skimmed skim"},
+  {n:"Curd / Yogurt (full fat)",kcal:61,p:3.5,c:4.7,fat:3.3,fiber:0,sugar:4,sodium:36,chol:13,satfat:2.1,vitC:0.5,calcium:121,iron:0,tags:"curd yogurt dahi full fat"},
+  {n:"Greek Yogurt",kcal:59,p:10,c:3.6,fat:0.4,fiber:0,sugar:3.2,sodium:36,chol:5,satfat:0.1,vitC:0,calcium:111,iron:0,tags:"greek yogurt protein high curd"},
+  {n:"Paneer (full fat)",kcal:265,p:18,c:1.2,fat:20,fiber:0,sugar:0,sodium:30,chol:70,satfat:12.5,vitC:0,calcium:480,iron:0.5,tags:"paneer cheese cottage indian"},
+  {n:"Low Fat Paneer",kcal:180,p:19,c:2,fat:10,fiber:0,sugar:0,sodium:30,chol:30,satfat:6,vitC:0,calcium:480,iron:0.5,tags:"paneer low fat lite"},
+  {n:"Whey Protein Powder",kcal:370,p:75,c:10,fat:4,fiber:0,sugar:5,sodium:200,chol:30,satfat:1,vitC:0,calcium:200,iron:1,tags:"whey protein powder supplement shake"},
+  {n:"Casein Protein Powder",kcal:360,p:72,c:12,fat:3,fiber:0,sugar:4,sodium:180,chol:20,satfat:0.5,vitC:0,calcium:350,iron:1.2,tags:"casein protein powder supplement"},
+  {n:"Butter",kcal:717,p:0.9,c:0.1,fat:81,fiber:0,sugar:0.1,sodium:576,chol:215,satfat:51,vitC:0,calcium:24,iron:0,tags:"butter dairy fat spread"},
+  {n:"Ghee",kcal:900,p:0,c:0,fat:100,fiber:0,sugar:0,sodium:0,chol:260,satfat:60,vitC:0,calcium:0,iron:0,tags:"ghee clarified butter fat oil"},
+  // VEGETABLES
+  {n:"Potato (boiled)",kcal:87,p:1.9,c:20,fat:0.1,fiber:1.8,sugar:0.9,sodium:6,chol:0,satfat:0,vitC:13,calcium:8,iron:0.3,tags:"potato aloo boiled"},
+  {n:"Spinach (raw)",kcal:23,p:2.9,c:3.6,fat:0.4,fiber:2.2,sugar:0.4,sodium:79,chol:0,satfat:0.1,vitC:28,calcium:99,iron:2.7,tags:"spinach palak leafy green"},
+  {n:"Broccoli (raw)",kcal:34,p:2.8,c:7,fat:0.4,fiber:2.6,sugar:1.7,sodium:33,chol:0,satfat:0.1,vitC:89,calcium:47,iron:0.7,tags:"broccoli raw vegetable"},
+  {n:"Carrot (raw)",kcal:41,p:0.9,c:10,fat:0.2,fiber:2.8,sugar:4.7,sodium:69,chol:0,satfat:0,vitC:5.9,calcium:33,iron:0.3,tags:"carrot raw gajar"},
+  {n:"Sweet Potato (boiled)",kcal:90,p:2,c:21,fat:0.1,fiber:3.3,sugar:4.2,sodium:27,chol:0,satfat:0,vitC:17,calcium:32,iron:0.7,tags:"sweet potato shakarkand"},
+  {n:"Peas (green, cooked)",kcal:84,p:5.4,c:14,fat:0.4,fiber:5.5,sugar:5.5,sodium:3,chol:0,satfat:0.1,vitC:14,calcium:27,iron:1.5,tags:"peas green cooked matar"},
+  {n:"Tomato (raw)",kcal:18,p:0.9,c:3.9,fat:0.2,fiber:1.2,sugar:2.6,sodium:5,chol:0,satfat:0,vitC:14,calcium:10,iron:0.3,tags:"tomato tamatar raw"},
+  {n:"Onion (raw)",kcal:40,p:1.1,c:9.3,fat:0.1,fiber:1.7,sugar:4.2,sodium:4,chol:0,satfat:0,vitC:7.4,calcium:23,iron:0.2,tags:"onion pyaz raw"},
+  {n:"Cauliflower",kcal:25,p:1.9,c:5,fat:0.3,fiber:2,sugar:1.9,sodium:30,chol:0,satfat:0.1,vitC:48,calcium:22,iron:0.4,tags:"cauliflower gobi"},
+  {n:"Mushroom (raw)",kcal:22,p:3.1,c:3.3,fat:0.3,fiber:1,sugar:2,sodium:5,chol:0,satfat:0,vitC:2.1,calcium:3,iron:0.5,tags:"mushroom raw"},
+  // FRUITS
+  {n:"Banana",kcal:89,p:1.1,c:23,fat:0.3,fiber:2.6,sugar:12,sodium:1,chol:0,satfat:0.1,vitC:8.7,calcium:5,iron:0.3,tags:"banana kela fruit"},
+  {n:"Apple",kcal:52,p:0.3,c:14,fat:0.2,fiber:2.4,sugar:10,sodium:1,chol:0,satfat:0,vitC:4.6,calcium:6,iron:0.1,tags:"apple seb fruit"},
+  {n:"Orange",kcal:47,p:0.9,c:12,fat:0.1,fiber:2.4,sugar:9.4,sodium:0,chol:0,satfat:0,vitC:53,calcium:40,iron:0.1,tags:"orange fruit citrus santra"},
+  {n:"Mango",kcal:60,p:0.8,c:15,fat:0.4,fiber:1.6,sugar:13.7,sodium:1,chol:0,satfat:0.1,vitC:36,calcium:11,iron:0.2,tags:"mango aam fruit"},
+  {n:"Papaya",kcal:43,p:0.5,c:11,fat:0.3,fiber:1.7,sugar:7.8,sodium:8,chol:0,satfat:0.1,vitC:61,calcium:20,iron:0.3,tags:"papaya papita fruit"},
+  {n:"Watermelon",kcal:30,p:0.6,c:7.6,fat:0.2,fiber:0.4,sugar:6.2,sodium:1,chol:0,satfat:0,vitC:8.1,calcium:7,iron:0.2,tags:"watermelon tarbooz fruit"},
+  {n:"Guava",kcal:68,p:2.6,c:14,fat:1,fiber:5.4,sugar:8.9,sodium:2,chol:0,satfat:0.3,vitC:228,calcium:18,iron:0.3,tags:"guava amrood fruit"},
+  {n:"Avocado",kcal:160,p:2,c:9,fat:15,fiber:6.7,sugar:0.7,sodium:7,chol:0,satfat:2.1,vitC:10,calcium:12,iron:0.6,tags:"avocado fruit healthy fat"},
+  // NUTS & SEEDS
+  {n:"Almonds (raw)",kcal:579,p:21,c:22,fat:50,fiber:12.5,sugar:4.4,sodium:1,chol:0,satfat:3.8,vitC:0,calcium:264,iron:3.7,tags:"almonds badam nuts raw"},
+  {n:"Walnuts",kcal:654,p:15,c:14,fat:65,fiber:6.7,sugar:2.6,sodium:2,chol:0,satfat:6.1,vitC:1.3,calcium:98,iron:2.9,tags:"walnuts akhrot nuts"},
+  {n:"Cashew (raw)",kcal:553,p:18,c:30,fat:44,fiber:3.3,sugar:5.9,sodium:12,chol:0,satfat:7.8,vitC:0.5,calcium:37,iron:6.7,tags:"cashew kaju nuts"},
+  {n:"Peanuts (roasted)",kcal:585,p:24,c:21,fat:49,fiber:8.5,sugar:4,sodium:18,chol:0,satfat:6.8,vitC:0,calcium:92,iron:2.3,tags:"peanuts groundnuts moongfali"},
+  {n:"Peanut Butter",kcal:588,p:25,c:20,fat:50,fiber:6,sugar:9,sodium:459,chol:0,satfat:10.3,vitC:0,calcium:49,iron:1.7,tags:"peanut butter spread nuts"},
+  {n:"Chia Seeds",kcal:486,p:17,c:42,fat:31,fiber:34,sugar:0,sodium:16,chol:0,satfat:3.3,vitC:1.6,calcium:631,iron:7.7,tags:"chia seeds superfood fiber"},
+  // OILS
+  {n:"Olive Oil",kcal:884,p:0,c:0,fat:100,fiber:0,sugar:0,sodium:2,chol:0,satfat:13.8,vitC:0,calcium:1,iron:0.6,tags:"olive oil cooking fat"},
+  {n:"Coconut Oil",kcal:862,p:0,c:0,fat:100,fiber:0,sugar:0,sodium:0,chol:0,satfat:82.5,vitC:0,calcium:1,iron:0,tags:"coconut oil cooking fat"},
+  {n:"Sunflower Oil",kcal:884,p:0,c:0,fat:100,fiber:0,sugar:0,sodium:0,chol:0,satfat:10.3,vitC:0,calcium:0,iron:0,tags:"sunflower oil cooking fat"},
+  // SNACKS & CEREALS
+  {n:"Protein Bar",kcal:380,p:25,c:40,fat:12,fiber:5,sugar:10,sodium:200,chol:10,satfat:3,vitC:0,calcium:100,iron:2,tags:"protein bar snack supplement"},
+  {n:"Granola Bar",kcal:440,p:8,c:65,fat:18,fiber:5,sugar:28,sodium:150,chol:0,satfat:3,vitC:0,calcium:30,iron:3,tags:"granola bar snack"},
+  {n:"Corn Flakes",kcal:357,p:7,c:84,fat:0.4,fiber:3.3,sugar:8,sodium:658,chol:0,satfat:0.1,vitC:0,calcium:3,iron:8,tags:"corn flakes cereal breakfast"},
+  {n:"Muesli",kcal:352,p:9.3,c:68,fat:5.9,fiber:8,sugar:22,sodium:120,chol:0,satfat:1,vitC:0,calcium:64,iron:4,tags:"muesli cereal breakfast"},
+  {n:"Digestive Biscuit",kcal:471,p:7.3,c:64,fat:20,fiber:4.5,sugar:17,sodium:380,chol:5,satfat:7,vitC:0,calcium:50,iron:2.5,tags:"digestive biscuit mcvities cookie"},
+  // INDIAN DISHES
+  {n:"Chicken Biryani",kcal:200,p:13,c:24,fat:6,fiber:1,sugar:0.5,sodium:450,chol:45,satfat:1.5,vitC:3,calcium:30,iron:1.2,tags:"biryani chicken rice dish"},
+  {n:"Veg Biryani",kcal:170,p:4,c:28,fat:5,fiber:2,sugar:1,sodium:400,chol:5,satfat:1,vitC:5,calcium:35,iron:1,tags:"biryani veg vegetable rice"},
+  {n:"Dal Makhani",kcal:145,p:7,c:17,fat:6,fiber:5,sugar:1,sodium:400,chol:15,satfat:3,vitC:2,calcium:60,iron:2.5,tags:"dal makhani black lentil cream"},
+  {n:"Palak Paneer",kcal:160,p:9,c:6,fat:11,fiber:2,sugar:1,sodium:350,chol:30,satfat:6,vitC:15,calcium:280,iron:2,tags:"palak paneer spinach cheese curry"},
+  {n:"Paneer Butter Masala",kcal:220,p:10,c:8,fat:17,fiber:1.5,sugar:3,sodium:450,chol:55,satfat:9,vitC:5,calcium:300,iron:1,tags:"paneer butter masala curry"},
+  {n:"Chole Masala",kcal:150,p:8,c:22,fat:4,fiber:6,sugar:2,sodium:380,chol:0,satfat:0.5,vitC:5,calcium:60,iron:3,tags:"chole chana masala curry chickpea"},
+  {n:"Rajma Masala",kcal:130,p:7,c:21,fat:2.5,fiber:5.5,sugar:1,sodium:360,chol:0,satfat:0.5,vitC:4,calcium:45,iron:2.5,tags:"rajma kidney beans masala"},
+  {n:"Aloo Gobi",kcal:90,p:2.5,c:12,fat:3.5,fiber:2.5,sugar:1,sodium:300,chol:0,satfat:0.5,vitC:30,calcium:30,iron:0.7,tags:"aloo gobi potato cauliflower sabzi"},
+  {n:"Bhindi / Okra Sabzi",kcal:80,p:2,c:10,fat:3,fiber:3.2,sugar:1.5,sodium:280,chol:0,satfat:0.5,vitC:16,calcium:80,iron:0.7,tags:"bhindi okra sabzi curry"},
+  {n:"Khichdi",kcal:130,p:5,c:22,fat:3,fiber:2,sugar:0,sodium:200,chol:5,satfat:0.5,vitC:1,calcium:25,iron:0.8,tags:"khichdi rice dal comfort"},
+  {n:"Pav Bhaji",kcal:180,p:4,c:28,fat:6,fiber:3,sugar:2,sodium:420,chol:10,satfat:2.5,vitC:25,calcium:40,iron:1.2,tags:"pav bhaji street food mumbai"},
+  {n:"Samosa (~100g)",kcal:262,p:4,c:31,fat:13,fiber:2.5,sugar:1,sodium:350,chol:0,satfat:3,vitC:4,calcium:25,iron:1.2,tags:"samosa snack fried potato"},
+  {n:"Poori",kcal:297,p:6,c:37,fat:14,fiber:2,sugar:0,sodium:300,chol:0,satfat:3,vitC:0,calcium:20,iron:1.5,tags:"poori puri fried bread wheat"},
+  {n:"Halwa (sooji/rava)",kcal:280,p:3.5,c:42,fat:11,fiber:1,sugar:22,sodium:100,chol:20,satfat:6,vitC:0,calcium:20,iron:1.2,tags:"halwa sooji rava semolina sweet dessert"},
+  {n:"Kheer / Rice Pudding",kcal:130,p:3.5,c:22,fat:3.5,fiber:0.2,sugar:15,sodium:55,chol:12,satfat:2.2,vitC:0,calcium:120,iron:0.3,tags:"kheer rice pudding milk sweet dessert"},
+  {n:"Dal Rice",kcal:120,p:5.5,c:21,fat:1.5,fiber:2.5,sugar:0.5,sodium:50,chol:0,satfat:0.1,vitC:1,calcium:20,iron:1,tags:"dal rice khana meal lunch"},
+  {n:"Roti Sabzi",kcal:150,p:4.5,c:25,fat:4,fiber:3.5,sugar:0.5,sodium:300,chol:0,satfat:0.5,vitC:5,calcium:35,iron:1.5,tags:"roti sabzi meal chapati vegetable"},
+  {n:"Bread Omelette",kcal:220,p:12,c:20,fat:10,fiber:1.5,sugar:2,sodium:500,chol:200,satfat:3,vitC:0,calcium:80,iron:1.8,tags:"bread omelette egg sandwich breakfast"},
+  {n:"Peanut Butter Toast",kcal:290,p:10,c:28,fat:16,fiber:3,sugar:5,sodium:350,chol:0,satfat:3,vitC:0,calcium:60,iron:1.8,tags:"peanut butter toast bread breakfast"},
+  // BEVERAGES
+  {n:"Chai (with milk & sugar)",kcal:50,p:1.5,c:8,fat:1.5,fiber:0,sugar:7,sodium:20,chol:5,satfat:0.9,vitC:0,calcium:50,iron:0,tags:"chai tea milk sugar beverage"},
+  {n:"Coffee (black, no sugar)",kcal:2,p:0.3,c:0,fat:0,fiber:0,sugar:0,sodium:2,chol:0,satfat:0,vitC:0,calcium:2,iron:0.1,tags:"coffee black no sugar beverage"},
+  {n:"Coconut Water",kcal:19,p:0.7,c:3.7,fat:0.2,fiber:1.1,sugar:2.6,sodium:105,chol:0,satfat:0,vitC:2.4,calcium:24,iron:0.3,tags:"coconut water nariyal pani beverage"},
+  {n:"Lassi (sweet)",kcal:75,p:3.5,c:9,fat:2.5,fiber:0,sugar:8,sodium:50,chol:10,satfat:1.6,vitC:0,calcium:120,iron:0,tags:"lassi sweet yogurt drink beverage"},
+  {n:"Buttermilk (chaas)",kcal:25,p:1.2,c:3.2,fat:0.7,fiber:0,sugar:3,sodium:55,chol:3,satfat:0.4,vitC:0,calcium:60,iron:0,tags:"buttermilk chaas chhachh drink"},
+  {n:"Protein Shake (water)",kcal:120,p:25,c:5,fat:1.5,fiber:0,sugar:3,sodium:150,chol:10,satfat:0.5,vitC:0,calcium:120,iron:0.8,tags:"protein shake supplement water"},
+  {n:"Milk with Oats",kcal:85,p:4,c:13,fat:2.7,fiber:1.5,sugar:4,sodium:47,chol:7,satfat:1.2,vitC:0,calcium:70,iron:0.6,tags:"oats milk breakfast porridge"},
+];
+
+const GOALS={kcal:2200,protMin:100,protMax:120,carbsMin:280,carbsMax:320,fatMin:60,fatMax:70};
+let log={};
+let currentDate=new Date();
+let acIndex=-1;
+let acItems=[];
+let showResult=null;
+
+function dateKey(d){return d.toISOString().slice(0,10)}
+function fmtDate(d){return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function getLog(){return log[dateKey(currentDate)]||[]}
+function setLog(items){log[dateKey(currentDate)]=items}
+
+function changeDay(d){
+  currentDate=new Date(currentDate);currentDate.setDate(currentDate.getDate()+d);
+  document.getElementById('date-display').textContent=fmtDate(currentDate);
+  closeDropdown();document.getElementById('results-area').innerHTML='';
+  document.getElementById('food-search').value='';showResult=null;renderLog();
+}
+
+function smartSearch(q){
+  if(!q||q.length<2)return[];
+  const lower=q.toLowerCase();
+  const words=lower.split(/\s+/);
+  return DB.map(f=>{
+    const h=(f.n+' '+f.tags).toLowerCase();
+    let s=0;
+    if(f.n.toLowerCase().startsWith(lower))s+=100;
+    else if(h.startsWith(lower))s+=80;
+    if(f.n.toLowerCase().includes(lower))s+=60;
+    words.forEach(w=>{if(w.length>1&&h.includes(w))s+=20});
+    return{f,s};
+  }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,8).map(x=>x.f);
+}
+
+function onSearchInput(){
+  const q=document.getElementById('food-search').value.trim();
+  acIndex=-1;
+  if(q.length<2){closeDropdown();return;}
+  acItems=smartSearch(q);
+  if(!acItems.length){closeDropdown();return;}
+  const dd=document.getElementById('ac-dropdown');
+  dd.innerHTML=acItems.map((f,i)=>`
+    <div class="ac-item" id="ac-${i}" onclick="pickFood(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="ac-name">${f.n}</div>
+        <div class="ac-kcal">${f.kcal} kcal</div>
+      </div>
+      <div class="ac-meta">P:${f.p}g &nbsp;C:${f.c}g &nbsp;F:${f.fat}g &nbsp;Fiber:${f.fiber}g</div>
+    </div>`).join('');
+  dd.style.display='block';
+}
+
+function closeDropdown(){document.getElementById('ac-dropdown').style.display='none';acIndex=-1;}
+
+function onSearchKey(e){
+  if(e.key==='Escape'){closeDropdown();return;}
+  if(!acItems.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();acIndex=Math.min(acIndex+1,acItems.length-1);highlightAC();}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIndex=Math.max(acIndex-1,-1);highlightAC();}
+  else if(e.key==='Enter'){e.preventDefault();if(acIndex>=0)pickFood(acIndex);}
+}
+
+function highlightAC(){
+  document.querySelectorAll('.ac-item').forEach((el,i)=>el.classList.toggle('active',i===acIndex));
+  if(acIndex>=0){const el=document.getElementById('ac-'+acIndex);if(el)el.scrollIntoView({block:'nearest'});}
+}
+
+function pickFood(i){
+  showResult=acItems[i];
+  document.getElementById('food-search').value=showResult.n;
+  closeDropdown();
+  document.getElementById('results-area').innerHTML=`
+    <div class="food-result">
+      <div class="fr-top">
+        <div>
+          <div class="fr-name">${showResult.n}</div>
+          <div class="fr-per">Values per 100g</div>
+          <div class="fr-macros">
+            <span class="fr-m p">P ${showResult.p}g</span>
+            <span class="fr-m c">C ${showResult.c}g</span>
+            <span class="fr-m f">F ${showResult.fat}g</span>
+            <span class="fr-m fb">Fiber ${showResult.fiber}g</span>
+          </div>
+        </div>
+        <div>
+          <div class="fr-kcal-big">${showResult.kcal}</div>
+          <div class="fr-kcal-label">kcal/100g</div>
+        </div>
+      </div>
+      <div class="qty-row">
+        <span class="qty-label">Qty:</span>
+        <input class="qty-input" id="qty-input" type="number" value="100" min="1" max="3000" oninput="updateCalc()"/>
+        <span style="font-size:12px;color:var(--text3)">g</span>
+        <span class="qty-calc" id="qty-calc-prev">${showResult.kcal} kcal</span>
+        <button class="add-btn" onclick="addCurrentFood()">+ Add</button>
+      </div>
+    </div>`;
+}
+
+function updateCalc(){
+  if(!showResult)return;
+  const qty=parseFloat(document.getElementById('qty-input').value)||0;
+  document.getElementById('qty-calc-prev').textContent=Math.round(showResult.kcal*qty/100)+' kcal';
+}
+
+function addCurrentFood(){
+  if(!showResult)return;
+  const qty=parseFloat(document.getElementById('qty-input').value)||100;
+  const items=getLog();items.push({...showResult,qty});setLog(items);renderLog();
+  document.getElementById('results-area').innerHTML='';
+  document.getElementById('food-search').value='';showResult=null;
+}
+
+document.addEventListener('click',function(e){if(!e.target.closest('.autocomplete'))closeDropdown();});
+
+function calcTotals(){
+  const items=getLog();
+  let kcal=0,p=0,c=0,fat=0,fiber=0,sugar=0,sodium=0,chol=0,satfat=0,vitC=0,calcium=0,iron=0;
+  items.forEach(i=>{
+    const s=i.qty/100;
+    kcal+=i.kcal*s;p+=i.p*s;c+=i.c*s;fat+=i.fat*s;
+    fiber+=(i.fiber||0)*s;sugar+=(i.sugar||0)*s;sodium+=(i.sodium||0)*s;
+    chol+=(i.chol||0)*s;satfat+=(i.satfat||0)*s;
+    vitC+=(i.vitC||0)*s;calcium+=(i.calcium||0)*s;iron+=(i.iron||0)*s;
+  });
+  return{kcal:Math.round(kcal),p:Math.round(p),c:Math.round(c),fat:Math.round(fat),
+    fiber:+(fiber.toFixed(1)),sugar:Math.round(sugar),sodium:Math.round(sodium),
+    chol:Math.round(chol),satfat:+(satfat.toFixed(1)),vitC:+(vitC.toFixed(1)),calcium:Math.round(calcium),iron:+(iron.toFixed(1))};
+}
+
+function pct(val,max){return Math.min(100,Math.round(val/max*100))}
+function statusPill(val,min,max){
+  if(val===0)return'<span class="status-pill" style="color:var(--text3)">—</span>';
+  if(val<min)return'<span class="status-pill pill-low">Low</span>';
+  if(val>max)return'<span class="status-pill pill-high">High</span>';
+  return'<span class="status-pill pill-good">On Track</span>';
+}
+
+function renderSummary(){
+  const t=calcTotals();
+  const rp=Math.min(1,t.kcal/GOALS.kcal);
+  document.getElementById('ring-circle').style.strokeDashoffset=(213.6*(1-rp)).toFixed(1);
+  document.getElementById('ring-circle').style.stroke=t.kcal>GOALS.kcal?'var(--red)':'var(--kcal)';
+  document.getElementById('kcal-main').textContent=t.kcal;
+  const rem=GOALS.kcal-t.kcal;
+  document.getElementById('kcal-remaining').innerHTML=rem>=0
+    ?`<span style="color:var(--green)">+${rem}</span> kcal remaining`
+    :`<span style="color:var(--red)">${rem}</span> kcal over goal`;
+  document.getElementById('r-prot').textContent=`P: ${t.p}g`;
+  document.getElementById('r-carbs').textContent=`C: ${t.c}g`;
+  document.getElementById('r-fat').textContent=`F: ${t.fat}g`;
+  document.getElementById('s-kcal').textContent=t.kcal;
+  document.getElementById('s-prot').textContent=t.p+'g';
+  document.getElementById('s-carbs').textContent=t.c+'g';
+  document.getElementById('s-fat').textContent=t.fat+'g';
+  document.getElementById('b-kcal').style.width=pct(t.kcal,GOALS.kcal)+'%';
+  document.getElementById('b-prot').style.width=pct(t.p,GOALS.protMax)+'%';
+  document.getElementById('b-carbs').style.width=pct(t.c,GOALS.carbsMax)+'%';
+  document.getElementById('b-fat').style.width=pct(t.fat,GOALS.fatMax)+'%';
+  document.getElementById('micro-grid').innerHTML=`
+    <div class="micro-item"><span class="mi-label">Fiber</span><span class="mi-val">${t.fiber}g</span></div>
+    <div class="micro-item"><span class="mi-label">Sugar</span><span class="mi-val">${t.sugar}g</span></div>
+    <div class="micro-item"><span class="mi-label">Sodium</span><span class="mi-val">${t.sodium}mg</span></div>
+    <div class="micro-item"><span class="mi-label">Cholesterol</span><span class="mi-val">${t.chol}mg</span></div>
+    <div class="micro-item"><span class="mi-label">Saturated Fat</span><span class="mi-val">${t.satfat}g</span></div>
+    <div class="micro-item"><span class="mi-label">Vitamin C</span><span class="mi-val">${t.vitC}mg</span></div>
+    <div class="micro-item"><span class="mi-label">Calcium</span><span class="mi-val">${t.calcium}mg</span></div>
+    <div class="micro-item"><span class="mi-label">Iron</span><span class="mi-val">${t.iron}mg</span></div>
+    <div class="micro-item"><span class="mi-label">Protein Status</span>${statusPill(t.p,GOALS.protMin,GOALS.protMax)}</div>
+    <div class="micro-item"><span class="mi-label">Carbs Status</span>${statusPill(t.c,GOALS.carbsMin,GOALS.carbsMax)}</div>
+    <div class="micro-item"><span class="mi-label">Fat Status</span>${statusPill(t.fat,GOALS.fatMin,GOALS.fatMax)}</div>
+    <div class="micro-item"><span class="mi-label">Calorie %</span><span class="mi-val">${pct(t.kcal,GOALS.kcal)}%</span></div>`;
+}
+
+function renderLog(){
+  const items=getLog();
+  document.getElementById('log-count').textContent=items.length+' item'+(items.length!==1?'s':'');
+  const el=document.getElementById('log-list');
+  if(!items.length){el.innerHTML='<div class="log-empty">No food logged yet.<br>Search and add above ↑</div>';renderSummary();return;}
+  el.innerHTML=items.map((item,i)=>{
+    const s=item.qty/100;
+    return`<div class="log-item">
+      <div style="flex:1;min-width:0">
+        <div class="li-name">${item.n}</div>
+        <div class="li-meta">${item.qty}g</div>
+        <div class="li-macros">
+          <span class="li-m p">P:${Math.round(item.p*s)}g</span>
+          <span class="li-m c">C:${Math.round(item.c*s)}g</span>
+          <span class="li-m f">F:${Math.round(item.fat*s)}g</span>
+        </div>
+      </div>
+      <div class="li-right">
+        <span class="li-kcal">${Math.round(item.kcal*s)}</span>
+        <button class="del-btn" onclick="removeItem(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderSummary();
+}
+
+function removeItem(idx){const items=getLog();items.splice(idx,1);setLog(items);renderLog();}
+
+document.getElementById('date-display').textContent=fmtDate(currentDate);
+renderLog();
+</script>
+</body>
+</html>
