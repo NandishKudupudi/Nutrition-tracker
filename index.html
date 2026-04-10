@@ -386,54 +386,73 @@ function removeItem(idx){
 }
 
 async function searchFood(){
-  if(isSearching)return;
-  const q=document.getElementById('food-search').value.trim();
-  const area=document.getElementById('results-area');
-  if(!q){area.innerHTML='';return;}
+  if(isSearching) return;
 
-  isSearching=true;
-  const btn=document.getElementById('search-btn');
-  btn.disabled=true;btn.textContent='...';
-  area.innerHTML=`<div class="search-loading"><div class="dot-pulse"><span></span><span></span><span></span></div>&nbsp; AI is fetching nutrition data for "${q}"...</div>`;
+  const q = document.getElementById('food-search').value.trim();
+  const area = document.getElementById('results-area');
 
-  try{
-    const resp=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        messages:[{
-          role:"user",
-          content:`You are a nutritionist database. Return nutrition data for: "${q}"
+  if(!q){
+    area.innerHTML = '';
+    return;
+  }
 
-Return ONLY a valid JSON array (no markdown, no preamble, just raw JSON) of 1-4 food items.
-If it's a combination dish, include it as one item.
-Include common Indian foods accurately.
+  isSearching = true;
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true;
+  btn.textContent = '...';
 
-Each item must have:
-{
-  "n": "Food name",
-  "per": "serving description e.g. 100g or 1 cup (240ml)",
-  "kcal": number (per 100g),
-  "p": number (protein g per 100g),
-  "c": number (carbs g per 100g),
-  "fat": number (fat g per 100g),
-  "fiber": number (g per 100g),
-  "sugar": number (g per 100g),
-  "sodium": number (mg per 100g),
-  "chol": number (cholesterol mg per 100g),
-  "satfat": number (saturated fat g per 100g),
-  "vitC": number (vitamin C mg per 100g),
-  "calcium": number (calcium mg per 100g),
-  "iron": number (iron mg per 100g)
+  area.innerHTML = `
+    <div class="search-loading">
+      Searching nutrition data for "${q}"...
+    </div>
+  `;
+
+  try {
+    const API_KEY = "7fddc239e8424abca667c105ba097d4e"; // 🔥 paste your key here
+
+    const resp = await fetch(
+      `https://api.spoonacular.com/recipes/guessNutrition?title=${encodeURIComponent(q)}&apiKey=${API_KEY}`
+    );
+
+    const data = await resp.json();
+
+    if (!data || !data.calories) {
+      throw new Error("No data");
+    }
+
+    const food = {
+      n: q,
+      per: "100g approx",
+      kcal: Math.round(data.calories.value),
+      p: Math.round(data.protein.value),
+      c: Math.round(data.carbs.value),
+      fat: Math.round(data.fat.value),
+      fiber: 0,
+      sugar: 0,
+      sodium: 0,
+      chol: 0,
+      satfat: 0,
+      vitC: 0,
+      calcium: 0,
+      iron: 0
+    };
+
+    searchResults = [food];
+    renderResults(searchResults);
+
+  } catch (e) {
+    console.error(e);
+    area.innerHTML = `
+      <div class="no-results">
+        Could not fetch data. Try a different food name.
+      </div>
+    `;
+  }
+
+  isSearching = false;
+  btn.disabled = false;
+  btn.textContent = 'Search';
 }
-
-Be accurate with Indian foods like idli, dosa, biryani, roti, dal, sabzi, etc.
-All values are PER 100g regardless of serving size.`
-        }]
-      })
-    });
 
     const data=await resp.json();
     let raw=data.content.map(i=>i.text||'').join('');
