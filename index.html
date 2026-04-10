@@ -408,57 +408,26 @@ async function searchFood(){
   `;
 
   try {
-    const API_KEY = "7fddc239e8424abca667c105ba097d4e"; // 🔥 paste your key here
 
-    const resp = await fetch(
-      `https://api.spoonacular.com/recipes/guessNutrition?title=${encodeURIComponent(q)}&apiKey=${API_KEY}`
-    );
 
-    const data = await resp.json();
+    const resp = await fetch("http://127.0.0.1:5000/api/search", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ query: q })
+});
 
-    if (!data || !data.calories) {
-      throw new Error("No data");
-    }
+const data = await resp.json();
 
-    const food = {
-      n: q,
-      per: "100g approx",
-      kcal: Math.round(data.calories.value),
-      p: Math.round(data.protein.value),
-      c: Math.round(data.carbs.value),
-      fat: Math.round(data.fat.value),
-      fiber: 0,
-      sugar: 0,
-      sodium: 0,
-      chol: 0,
-      satfat: 0,
-      vitC: 0,
-      calcium: 0,
-      iron: 0
-    };
-
-    searchResults = [food];
-    renderResults(searchResults);
-
-  } catch (e) {
-    console.error(e);
-    area.innerHTML = `
-      <div class="no-results">
-        Could not fetch data. Try a different food name.
-      </div>
-    `;
-  }
-
-  isSearching = false;
-  btn.disabled = false;
-  btn.textContent = 'Search';
+if (!data.content) {
+  throw new Error("Invalid response");
 }
 
-    const data=await resp.json();
-    let raw=data.content.map(i=>i.text||'').join('');
-    // strip markdown fences
-    raw=raw.replace(/```json|```/g,'').trim();
-    const foods=JSON.parse(raw);
+let raw = data.content.map(i => i.text || '').join('');
+raw = raw.replace(/```json|```/g, '').trim();
+
+const foods = JSON.parse(raw);
 
     if(!foods||!foods.length){
       area.innerHTML='<div class="no-results">No results found. Try a different name.</div>';
